@@ -176,8 +176,13 @@ static int posix_timer_add(struct k_itimer *timer)
 			/* Loop over all possible ids completed */
 			ret = -EAGAIN;
 		spin_unlock(&hash_lock);
+		cond_resched();
 	} while (ret == -ENOENT);
 	return ret;
+	}
+	/* POSIX return code when no timer ID could be allocated */
+	return -EAGAIN;
+>>>>>>> 111c1ee3e915 (Merge branch 'linux-4.19.y-st' into linux-4.19.y-cip)
 }
 
 static inline void unlock_timer(struct k_itimer *timr, unsigned long flags)
