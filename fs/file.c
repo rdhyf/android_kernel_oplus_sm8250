@@ -131,7 +131,11 @@ static struct fdtable *alloc_fdtable(unsigned int slots_wanted)
 	 * INT_MAX, as filp_cachep objects are not __GFP_NOWARN.
 	 *
 	 * This can happen when sysctl_nr_open is set to a very high value and
-	 * a process tries to use a file descriptor near that limit.
+	 * a process tries to use a file descriptor near that limit. For example,
+	 * if sysctl_nr_open is set to 1073741816 (0x3ffffff8) - which is what
+	 * systemd typically sets it to - then trying to use a file descriptor
+	 * close to that value will require allocating a file descriptor table
+	 * that exceeds 8GB in size.
 	 */
 	if (unlikely(nr > INT_MAX / sizeof(struct file *)))
 		return ERR_PTR(-EMFILE);
@@ -344,7 +348,6 @@ struct files_struct *dup_fd(struct files_struct *oldf, struct fd_range *punch_ho
 
 		spin_lock(&oldf->file_lock);
 	}
-
 
 		/*
 		 * Reacquire the oldf lock and a pointer to its fd table
