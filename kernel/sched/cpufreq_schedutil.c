@@ -163,11 +163,23 @@ static bool sugov_should_update_freq(struct sugov_policy *sg_policy, u64 time)
 	if (!cpufreq_this_cpu_can_update(sg_policy->policy))
 		return false;
 
-	if (unlikely(sg_policy->limits_changed)) {
-		sg_policy->limits_changed = false;
-		sg_policy->need_freq_update = cpufreq_driver_test_flags(CPUFREQ_NEED_UPDATE_LIMITS);
+	if (unlikely(READ_ONCE(sg_policy->limits_changed))) {
+		WRITE_ONCE(sg_policy->limits_changed, false);
+		sg_policy->need_freq_update = true;
+
+		/*
+		 * The above limits_changed update must occur before the reads
+		 * of policy limits in cpufreq_driver_resolve_freq() or a policy
+		 * limits update might be missed, so use a memory barrier to
+		 * ensure it.
+		 *
+		 * This pairs with the write memory barrier in sugov_limits().
+		 */
+		smp_mb();
+
 		return true;
 	}
+
 
 	/* No need to recalculate next freq for min_rate_limit_us
 	 * at least. However we might still decide to further rate
@@ -888,28 +900,20 @@ static void sugov_walt_adjust(struct sugov_cpu *sg_cpu, unsigned long *util,
  * Make sugov_should_update_freq() ignore the rate limit when DL
  * has increased the utilization.
  */
-static inline void ignore_dl_rate_limit(struct sugov_cpu *sg_cpu, struct sugov_policy *sg_policy)
+static inline void ignore_dl_rate_limit(struct sugov_cpu *sg_cpu,
+										struct sugov_policy *sg_policy)
 {
-#ifdef OPLUS_FEATURE_POWER_CPUFREQ
+	#ifdef OPLUS_FEATURE_POWER_CPUFREQ
 	if (cpu_bw_dl(cpu_rq(sg_cpu->cpu)) > sg_cpu->bw_dl) {
-		sg_policy->limits_changed = true;
+		WRITE_ONCE(sg_policy->limits_changed, true);
 		sg_policy->after_limits_changed = true;
 	}
-#else
+	#else
 	if (cpu_bw_dl(cpu_rq(sg_cpu->cpu)) > sg_cpu->bw_dl)
-		sg_policy->limits_changed = true;
-#endif
+		WRITE_ONCE(sg_policy->limits_changed, true);
+	#endif
 }
 
-static inline unsigned long target_util(struct sugov_policy *sg_policy,
-				  unsigned int freq)
-{
-	unsigned long util;
-
-	util = freq_to_util(sg_policy, freq);
-	util = mult_frac(util, TARGET_LOAD, 100);
-	return util;
-}
 
 static void sugov_update_single(struct update_util_data *hook, u64 time,
 				unsigned int flags)
@@ -1946,25 +1950,33 @@ static void sugov_limits(struct cpufreq_policy *policy)
 		raw_spin_unlock_irqrestore(&sg_policy->update_lock, flags);
 	}
 
-#ifdef OPLUS_FEATURE_POWER_CPUFREQ
+	#ifdef OPLUS_FEATURE_POWER_CPUFREQ
 	if (policy->min == policy->cpuinfo.max_freq &&
-	    policy->min > sg_policy->min_freq) {
+		policy->min > sg_policy->min_freq) {
 		sg_policy->start_time = ktime_get();
-		sg_policy->freq_locked = true;
-	} else if (sg_policy->freq_locked && policy->min < policy->max) {
-		now = ktime_get();
-		delta = ktime_to_ns(ktime_sub(now, sg_policy->start_time));
-		if (delta >= 8 * NSEC_PER_SEC)
-			pr_warn("policy%d's freq locked at max_freq for %lld(ns)",
-				cpumask_first(policy->related_cpus), delta);
-		sg_policy->freq_locked = false;
-	}
-	sg_policy->min_freq = policy->min;
-	sg_policy->after_limits_changed = true;
-#endif
+	sg_policy->freq_locked = true;
+		} else if (sg_policy->freq_locked && policy->min < policy->max) {
+			now = ktime_get();
+			delta = ktime_to_ns(ktime_sub(now, sg_policy->start_time));
+			if (delta >= 8 * NSEC_PER_SEC)
+				pr_warn("policy%d's freq locked at max_freq for %lld(ns)",
+						cpumask_first(policy->related_cpus), delta);
+				sg_policy->freq_locked = false;
+		}
+		sg_policy->min_freq = policy->min;
+		sg_policy->after_limits_changed = true;
+		#endif
 
-	sg_policy->limits_changed = true;
-}
+		/*
+		 * The limits_changed update below must take place before the updates
+		 * of policy limits in cpufreq_set_policy() or a policy limits update
+		 * might be missed, so use a memory barrier to ensure it.
+		 *
+		 * This pairs with the memory barrier in sugov_should_update_freq().
+		 */
+		smp_wmb();
+
+		WRITE_ONCE(sg_policy->limits_changed, true);
 
 static struct cpufreq_governor schedutil_gov = {
 	.name			= "schedutil",
