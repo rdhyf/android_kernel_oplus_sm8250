@@ -1978,6 +1978,7 @@ static void sugov_limits(struct cpufreq_policy *policy)
 
 		WRITE_ONCE(sg_policy->limits_changed, true);
 
+
 static struct cpufreq_governor schedutil_gov = {
 	.name			= "schedutil",
 	.owner			= THIS_MODULE,
