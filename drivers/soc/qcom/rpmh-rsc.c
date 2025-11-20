@@ -308,7 +308,7 @@ static irqreturn_t tcs_tx_done(int irq, void *p)
 			 */
 			enable_tcs_irq(drv, i, false);
 		}
-skip:
+
 		/* Reclaim the TCS */
 		write_tcs_reg(drv, RSC_DRV_CMD_ENABLE, i, 0);
 		write_tcs_reg(drv, RSC_DRV_CMD_WAIT_FOR_CMPL, i, 0);
