@@ -316,10 +316,9 @@ static irqreturn_t tcs_tx_done(int irq, void *p)
 		clear_bit(i, drv->tcs_in_use);
 		if (req)
 			rpmh_tx_done(req, err);
-	}
 
-	return IRQ_HANDLED;
-}
+		return IRQ_HANDLED;
+
 
 static void __tcs_buffer_write(struct rsc_drv *drv, int tcs_id, int cmd_id,
 			       const struct tcs_request *msg)
