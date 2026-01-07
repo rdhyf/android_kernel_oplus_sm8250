@@ -2142,50 +2142,43 @@ static void ffs_func_eps_disable(struct ffs_function *func)
 	spin_unlock_irqrestore(&func->ffs->eps_lock, flags);
 }
 
-static int ffs_func_eps_enable(struct ffs_function *func)
-{
-	struct ffs_data *ffs;
-	struct ffs_ep *ep;
-	struct ffs_epfile *epfile;
-	unsigned short count;
-	unsigned long flags;
-	int ret = 0;
+ffs_log("enter: state %d setup_state %d flag %lu",
+		func->ffs->state,
+		func->ffs->setup_state,
+		func->ffs->flags);
 
-	spin_lock_irqsave(&func->ffs->eps_lock, flags);
-	ffs = func->ffs;
-	ep = func->eps;
-	epfile = ffs->epfiles;
-	count = ffs->eps_count;
+if (!epfile) {
+	ret = -ENOMEM;
+	goto done;
+}
 
-	ffs_log("enter: state %d setup_state %d flag %lu", func->ffs->state,
-		func->ffs->setup_state, func->ffs->flags);
+while (count--) {
+	ep->ep->driver_data = ep;
 
-	while(count--) {
-		ep->ep->driver_data = ep;
-
-		ret = config_ep_by_speed(func->gadget, &func->function, ep->ep);
-		if (ret) {
-			pr_err("%s: config_ep_by_speed(%s) returned %d\n",
-					__func__, ep->ep->name, ret);
-			break;
-		}
-
-		ret = usb_ep_enable(ep->ep);
-		if (likely(!ret)) {
-			epfile->ep = ep;
-			epfile->in = usb_endpoint_dir_in(ep->ep->desc);
-			epfile->isoc = usb_endpoint_xfer_isoc(ep->ep->desc);
-			ffs_log("usb_ep_enable %s", ep->ep->name);
-		} else {
-			ffs_log("usb_ep_enable %s ret %d", ep->ep->name, ret);
-			break;
-		}
-
-		++ep;
-		++epfile;
+	ret = config_ep_by_speed(func->gadget, &func->function, ep->ep);
+	if (ret) {
+		pr_err("%s: config_ep_by_speed(%s) returned %d\n",
+			   __func__, ep->ep->name, ret);
+		break;
 	}
 
+	ret = usb_ep_enable(ep->ep);
+	if (likely(!ret)) {
+		epfile->ep = ep;
+		epfile->in = usb_endpoint_dir_in(ep->ep->desc);
+		epfile->isoc = usb_endpoint_xfer_isoc(ep->ep->desc);
+		ffs_log("usb_ep_enable %s", ep->ep->name);
+	} else {
+		ffs_log("usb_ep_enable %s ret %d", ep->ep->name, ret);
+		break;
+	}
+
+	++ep;
+	++epfile;
+}
+
 	wake_up_interruptible(&ffs->wait);
+done:
 	spin_unlock_irqrestore(&func->ffs->eps_lock, flags);
 
 	return ret;
