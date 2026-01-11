@@ -2152,6 +2152,11 @@ if (!epfile) {
 	goto done;
 }
 
+if (!epfile) {
+	ret = -ENOMEM;
+	goto done;
+}
+
 while (count--) {
 	ep->ep->driver_data = ep;
 
@@ -2161,6 +2166,21 @@ while (count--) {
 			   __func__, ep->ep->name, ret);
 		break;
 	}
+
+	ret = usb_ep_enable(ep->ep);
+	if (likely(!ret)) {
+		epfile->ep = ep;
+		epfile->in = usb_endpoint_dir_in(ep->ep->desc);
+		epfile->isoc = usb_endpoint_xfer_isoc(ep->ep->desc);
+		ffs_log("usb_ep_enable %s", ep->ep->name);
+	} else {
+		ffs_log("usb_ep_enable %s ret %d", ep->ep->name, ret);
+		break;
+	}
+
+	++ep;
+	++epfile;
+}
 
 	ret = usb_ep_enable(ep->ep);
 	if (likely(!ret)) {
