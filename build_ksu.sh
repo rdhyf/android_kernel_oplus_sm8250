@@ -17,7 +17,7 @@ if [ ! -d "$AK3_PATH" ]; then
     git clone --depth=1 -b realme-sm8250 https://github.com/ermyltsor/AnyKernel3.git $AK3_PATH
 fi
 
-# Clenan existing anykernel packages
+# Clean existing anykernel packages
 if find $AK3_PATH -maxdepth 1 -type f -name "*.zip" | grep -q .; then
     find $AK3_PATH -maxdepth 1 -type f -name "*.zip" -delete
 fi
