@@ -31,6 +31,12 @@ if [ ! -d "$KERNEL_ROOT/zyc-clang-16" ]; then
     tar -xvf /tmp/Clang-16.0.6-20250721.tar.gz -C "$KERNEL_ROOT/zyc-clang-16"
 fi
 
+
+# ReSukiSU
+if [ ! -d "$KERNEL_ROOT/KernelSU" ]; then
+     curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s builtin
+fi
+
 export CLANG_PATH=$KERNEL_ROOT/zyc-clang-16/bin
 export PATH="$CLANG_PATH:$PATH"
 export CROSS_COMPILE=aarch64-linux-gnu-
