@@ -1,3 +1,30 @@
+# Build it yourself?
+
+Build Kernel
+```bash
+  sh ./build.sh
+```
+Build kernel with ReSukiSU
+```bash
+  sh ./build_ksu.sh
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+___________________________________________________________________________________________________
+```
 Linux kernel
 ============
 
@@ -17,3 +44,4 @@ See Documentation/00-INDEX for a list of what is contained in each file.
 Please read the Documentation/process/changes.rst file, as it contains the
 requirements for building and running the kernel, and information about
 the problems which may result by upgrading your kernel.
+```
