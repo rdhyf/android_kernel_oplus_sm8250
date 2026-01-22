@@ -14,7 +14,7 @@ CUSTOM_AK3_NAME=BT-ReSukiSU-BPF-5.10
 FULL_AK3_NAME=$CUSTOM_AK3_NAME-$(date +%Y-%m-%d)
 
 if [ ! -d "$AK3_PATH" ]; then
-    git clone --depth=1 -b realme-sm8250 https://github.com/ermyltsor/AnyKernel3.git $AK3_PATH
+    git clone --depth=1 -b realme-sm8250 https://github.com/xxtvrxx233/AnyKernel3.git $AK3_PATH
 fi
 
 # Clean existing anykernel packages
