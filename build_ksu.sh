@@ -42,7 +42,7 @@ export PATH="$CLANG_PATH:$PATH"
 export CROSS_COMPILE=aarch64-linux-gnu-
 export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 
-KERNEL_DEFCONFIG="ksu_kona_defconfig"
+KERNEL_DEFCONFIG="vendor/kona-perf_defconfig vendor/ksu.config"
 
 echo "Build for OnePlus?"
 read -r -p "Input [y / n]: " select
