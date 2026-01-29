@@ -38,6 +38,19 @@ export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 
 KERNEL_DEFCONFIG="vendor/kona-perf_defconfig"
 
+# Restore files modified by ReSukiSU
+
+echo "Restoring drivers/Makefile and drivers/Kconfig from remote repository..."
+
+REMOTE="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} | cut -d/ -f1)"
+BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+
+
+git checkout "$REMOTE/$BRANCH" -- drivers/Makefile drivers/Kconfig
+
+echo "Restore completed"
+
+
 echo "Build for OnePlus?"
 read -r -p "Input [y / n]: " select
 

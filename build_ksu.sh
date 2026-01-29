@@ -32,10 +32,39 @@ if [ ! -d "$KERNEL_ROOT/zyc-clang-16" ]; then
 fi
 
 
+
 # ReSukiSU
 if [ ! -d "$KERNEL_ROOT/KernelSU" ]; then
      curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s builtin
 fi
+
+echo "Preparing KSU build environment..."
+
+# ---- drivers/Kconfig ----
+KCONFIG_FILE="drivers/Kconfig"
+KSU_KCONFIG_LINE='source "drivers/kernelsu/Kconfig"'
+
+if ! grep -qF "$KSU_KCONFIG_LINE" "$KCONFIG_FILE"; then
+    echo "Injecting KSU Kconfig entry..."
+    echo "" >> "$KCONFIG_FILE"
+    echo "$KSU_KCONFIG_LINE" >> "$KCONFIG_FILE"
+else
+    echo "KSU Kconfig entry already present, skipping"
+fi
+
+# ---- drivers/Makefile ----
+MAKEFILE_FILE="drivers/Makefile"
+KSU_MAKEFILE_LINE='obj-$(CONFIG_KSU) += kernelsu/'
+
+if ! grep -qF "$KSU_MAKEFILE_LINE" "$MAKEFILE_FILE"; then
+    echo "Injecting KSU Makefile entry..."
+    echo "" >> "$MAKEFILE_FILE"
+    echo "$KSU_MAKEFILE_LINE" >> "$MAKEFILE_FILE"
+else
+    echo "KSU Makefile entry already present, skipping"
+fi
+
+echo "KSU injection completed"
 
 export CLANG_PATH=$KERNEL_ROOT/zyc-clang-16/bin
 export PATH="$CLANG_PATH:$PATH"
