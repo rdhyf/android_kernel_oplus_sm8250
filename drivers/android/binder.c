@@ -1155,13 +1155,13 @@ void ob_sysctrace_c(struct binder_proc *proc, struct binder_thread *thread)
 	ob_tracing_mark_write(buf);
 }
 
-static int get_task_cgroup_id(struct task_struct *task)
+int get_task_cgroup_id(struct task_struct *task)
 {
 	struct cgroup_subsys_state *css = task_css(task, schedtune_cgrp_id);
 		return css ? css->id : -1;
 }
 
-static bool test_task_bg(struct task_struct *task)
+bool test_task_bg(struct task_struct *task)
 {
 	return (SA_CGROUP_BACKGROUND == get_task_cgroup_id(task)) ? 1 : 0;
 }
