@@ -2142,20 +2142,29 @@ static void ffs_func_eps_disable(struct ffs_function *func)
 	spin_unlock_irqrestore(&func->ffs->eps_lock, flags);
 }
 
-ffs_log("enter: state %d setup_state %d flag %lu",
-		func->ffs->state,
-		func->ffs->setup_state,
-		func->ffs->flags);
+static int ffs_func_eps_enable(struct ffs_function *func)
+{
+	struct ffs_data *ffs;
+	struct ffs_ep *ep;
+	struct ffs_epfile *epfile;
+	unsigned short count;
+	unsigned long flags;
+	int ret = 0;
+
+	spin_lock_irqsave(&func->ffs->eps_lock, flags);
+	ffs = func->ffs;
+	ep = func->eps;
+	epfile = ffs->epfiles;
+	count = ffs->eps_count;
+
+	ffs_log("enter: state %d setup_state %d flag %lu", func->ffs->state,
+			func->ffs->setup_state, func->ffs->flags);
 
 if (!epfile) {
 	ret = -ENOMEM;
 	goto done;
 }
 
-if (!epfile) {
-	ret = -ENOMEM;
-	goto done;
-}
 
 while (count--) {
 	ep->ep->driver_data = ep;
@@ -2182,20 +2191,6 @@ while (count--) {
 	++epfile;
 }
 
-	ret = usb_ep_enable(ep->ep);
-	if (likely(!ret)) {
-		epfile->ep = ep;
-		epfile->in = usb_endpoint_dir_in(ep->ep->desc);
-		epfile->isoc = usb_endpoint_xfer_isoc(ep->ep->desc);
-		ffs_log("usb_ep_enable %s", ep->ep->name);
-	} else {
-		ffs_log("usb_ep_enable %s ret %d", ep->ep->name, ret);
-		break;
-	}
-
-	++ep;
-	++epfile;
-}
 
 	wake_up_interruptible(&ffs->wait);
 done:

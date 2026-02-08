@@ -661,6 +661,8 @@ unsigned long schedutil_cpu_util(int cpu, unsigned long util_cfs,
 	util = scale_irq_capacity(util, irq, max);
 	util += irq;
 
+
+
 	/*
 	 * Bandwidth required by DEADLINE must always be granted while, for
 	 * FAIR and RT, we use blocked utilization of IDLE CPUs as a mechanism
@@ -675,6 +677,16 @@ unsigned long schedutil_cpu_util(int cpu, unsigned long util_cfs,
 		util += cpu_bw_dl(rq);
 
 	return min(max, util);
+}
+
+static inline unsigned long target_util(struct sugov_policy *sg_policy,
+										unsigned int freq)
+{
+	unsigned long util;
+
+	util = freq_to_util(sg_policy, freq);
+	util = mult_frac(util, TARGET_LOAD, 100);
+	return util;
 }
 
 #ifdef CONFIG_SCHED_WALT
@@ -1953,19 +1965,27 @@ static void sugov_limits(struct cpufreq_policy *policy)
 	#ifdef OPLUS_FEATURE_POWER_CPUFREQ
 	if (policy->min == policy->cpuinfo.max_freq &&
 		policy->min > sg_policy->min_freq) {
+
 		sg_policy->start_time = ktime_get();
 	sg_policy->freq_locked = true;
+
 		} else if (sg_policy->freq_locked && policy->min < policy->max) {
+
 			now = ktime_get();
 			delta = ktime_to_ns(ktime_sub(now, sg_policy->start_time));
-			if (delta >= 8 * NSEC_PER_SEC)
+
+			if (delta >= 8 * NSEC_PER_SEC) {
 				pr_warn("policy%d's freq locked at max_freq for %lld(ns)",
 						cpumask_first(policy->related_cpus), delta);
-				sg_policy->freq_locked = false;
+			}
+
+			sg_policy->freq_locked = false;
 		}
+
 		sg_policy->min_freq = policy->min;
 		sg_policy->after_limits_changed = true;
 		#endif
+
 
 		/*
 		 * The limits_changed update below must take place before the updates
@@ -1978,6 +1998,7 @@ static void sugov_limits(struct cpufreq_policy *policy)
 
 		WRITE_ONCE(sg_policy->limits_changed, true);
 
+}
 
 static struct cpufreq_governor schedutil_gov = {
 	.name			= "schedutil",

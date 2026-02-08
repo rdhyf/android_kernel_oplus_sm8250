@@ -282,42 +282,38 @@ static irqreturn_t tcs_tx_done(int irq, void *p)
 			cmd = &req->cmds[j];
 			sts = read_tcs_reg(drv, RSC_DRV_CMD_STATUS, i, j);
 			if (!(sts & CMD_STATUS_ISSUED) ||
-			   ((req->wait_for_compl || cmd->wait) &&
-			   !(sts & CMD_STATUS_COMPL))) {
+				((req->wait_for_compl || cmd->wait) &&
+				!(sts & CMD_STATUS_COMPL))) {
 				pr_err("Incomplete request: %s: addr=%#x data=%#x",
-				       drv->name, cmd->addr, cmd->data);
+					   drv->name, cmd->addr, cmd->data);
 				err = -EIO;
-			}
+				}
 		}
 
 		trace_rpmh_tx_done(drv, i, req, err);
 		ipc_log_string(drv->ipc_log_ctx,
-			       "IRQ response: m=%d err=%d", i, err);
+					   "IRQ response: m=%d err=%d", i, err);
 
-		/*
-		 * if wake tcs was re-purposed for sending active
-		 * votes, clear AMC trigger & enable modes and
-		 * disable interrupt for this TCS
-		 */
 		if (!drv->tcs[ACTIVE_TCS].num_tcs) {
 			__tcs_trigger(drv, i, false);
-			/*
-			 * Disable interrupt for this TCS to avoid being
-			 * spammed with interrupts coming when the solver
-			 * sends its wake votes.
-			 */
 			enable_tcs_irq(drv, i, false);
 		}
 
-		/* Reclaim the TCS */
 		write_tcs_reg(drv, RSC_DRV_CMD_ENABLE, i, 0);
 		write_tcs_reg(drv, RSC_DRV_CMD_WAIT_FOR_CMPL, i, 0);
 		write_tcs_reg(drv, RSC_DRV_IRQ_CLEAR, 0, BIT(i));
 		clear_bit(i, drv->tcs_in_use);
+
 		if (req)
 			rpmh_tx_done(req, err);
 
-		return IRQ_HANDLED;
+		skip:
+		continue;
+	}
+
+	return IRQ_HANDLED;
+}
+
 
 
 static void __tcs_buffer_write(struct rsc_drv *drv, int tcs_id, int cmd_id,
