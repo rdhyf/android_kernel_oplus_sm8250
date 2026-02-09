@@ -2701,7 +2701,7 @@ static void get_scan_count(struct lruvec *lruvec, struct mem_cgroup *memcg,
 	bool balance_anon_file_reclaim = true;
 #endif
 
-	unsigned long totalswap = total_swap_pages;
+	unsigned long __maybe_unused totalswap = total_swap_pages;
 #if defined(CONFIG_NANDSWAP)
 	if (nandswap_si)
 		totalswap -= nandswap_si->pages;

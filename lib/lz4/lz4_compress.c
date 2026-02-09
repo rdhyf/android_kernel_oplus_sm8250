@@ -1030,7 +1030,7 @@ int LZ4_loadDict_internal(LZ4_stream_t *LZ4_dict, const char *dictionary, int di
 	const tableType_t tableType = byU32;
 	const BYTE *p = (const BYTE *)dictionary;
 	const BYTE *const dictEnd = p + dictSize;
-	const BYTE *base;
+	const BYTE __maybe_unused *base;
 	U32 idx32;
 
 	DEBUGLOG(4, "LZ4_loadDict (%i bytes from %p into %p)", dictSize,
