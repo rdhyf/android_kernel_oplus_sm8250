@@ -1,7 +1,7 @@
 #!/bin/bash
 
 KERNEL_ROOT=$PWD
-
+DRIVER_DIR="$KERNEL_ROOT/drivers"
 KERNEL_OUTPUT=$KERNEL_ROOT/out/arch/arm64/boot
 
 # ARCH
@@ -35,7 +35,8 @@ fi
 
 # ReSukiSU
 if [ ! -d "$KERNEL_ROOT/KernelSU" ]; then
-     curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash -s builtin
+     curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
+     ln -sf "$(realpath --relative-to="$DRIVER_DIR" "$KERNEL_ROOT/KernelSU/kernel")" "kernelsu" && echo "[+] Symlink created."
 fi
 
 echo "Preparing KSU build environment..."
