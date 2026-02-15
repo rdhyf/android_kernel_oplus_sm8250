@@ -10,17 +10,11 @@ Build Kernel with ReSukiSU
 ```
 
 
+# Kernel CI Build System
+This repository is equipped with a fully automated kernel build system powered by GitHub Actions
+Once code is pushed to the repository, the kernel will be built and packaged automatically in the cloud, eliminating the need for local builds
 
-
-
-
-
-
-
-
-
-
-
+You can download artifacts [here](https://github.com/xxtvrxx233/android_kernel_oplus_sm8250/actions)
 
 
 ___________________________________________________________________________________________________
