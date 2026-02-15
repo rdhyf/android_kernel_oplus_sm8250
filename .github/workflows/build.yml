@@ -1,0 +1,34 @@
+name: Build kernel (noksu)
+
+on:
+  push:
+    branches: [ mysterious ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            bc bison flex libssl-dev \
+            libelf-dev cpio \
+            python3 rsync wget git zip \
+            llvm lld
+
+      - name: Run build script
+        run: |
+          chmod +x ./ci/build_ci.sh
+          ./ci/build_ci.sh
+
+      - name: Upload AnyKernel3 zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: mysterious
+          path: |
+            anykernel/*.zip
