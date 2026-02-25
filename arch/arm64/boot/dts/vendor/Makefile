@@ -2,6 +2,10 @@
 # Copyright (C) 2018-2020 Oplus. All rights reserved.
 vendor := $(srctree)/$(src)
 
+ifneq "$(wildcard $(vendor)/qcom)" ""
+	subdir-y += qcom
+endif
+
 ifeq ($(strip $(BRAND_SHOW_FLAG)), oneplus)
 #oneplus SM8250 project
 subdir-y += 19821
