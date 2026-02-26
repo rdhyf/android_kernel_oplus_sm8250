@@ -14,4 +14,3 @@
 	qcom,board-id = <0x10008 0>;
 	oplus,dtsi_no = <21623>;
 };
-
