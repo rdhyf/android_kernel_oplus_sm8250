@@ -26,8 +26,6 @@ subdir-y += 20351
 subdir-y += 21027
 #realme SM8250 project
 subdir-y += 19795
-subdir-y += 20607
-subdir-y += 19705
 subdir-y += 21615
 subdir-y += 21619
 subdir-y += 21623
