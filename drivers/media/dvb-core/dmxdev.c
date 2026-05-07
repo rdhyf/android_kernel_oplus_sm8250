@@ -859,6 +859,7 @@ static int dvb_dvr_open(struct inode *inode, struct file *file)
 			mutex_unlock(&dmxdev->mutex);
 			return -ENOMEM;
 		}
+
 		dvb_ringbuffer_init(&dmxdev->dvr_buffer, mem, DVR_BUFFER_SIZE);
 		dvb_dmxdev_flush_events(&dmxdev->dvr_output_events);
 		dmxdev->dvr_output_events.event_mask.disable_mask = 0;

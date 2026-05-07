@@ -14,7 +14,6 @@
 #include <crypto/internal/hash.h>
 #include <crypto/internal/skcipher.h>
 #include <crypto/authenc.h>
-#include <crypto/null.h>
 #include <crypto/scatterwalk.h>
 #include <linux/err.h>
 #include <linux/init.h>
@@ -189,6 +188,7 @@ out:
 	authenc_request_complete(areq, err);
 }
 
+
 static int crypto_authenc_copy_assoc(struct aead_request *req)
 {
 	struct crypto_aead *authenc = crypto_aead_reqtfm(req);
@@ -222,10 +222,7 @@ static int crypto_authenc_encrypt(struct aead_request *req)
 	dst = src;
 
 	if (req->src != req->dst) {
-		err = crypto_authenc_copy_assoc(req);
-		if (err)
-			return err;
-
+		memcpy_sglist(req->dst, req->src, req->assoclen);
 		dst = scatterwalk_ffwd(areq_ctx->dst, req->dst, req->assoclen);
 	}
 
@@ -338,14 +335,8 @@ static int crypto_authenc_init_tfm(struct crypto_aead *tfm)
 	if (IS_ERR(enc))
 		goto err_free_ahash;
 
-	null = crypto_get_default_null_skcipher();
-	err = PTR_ERR(null);
-	if (IS_ERR(null))
-		goto err_free_skcipher;
-
 	ctx->auth = auth;
 	ctx->enc = enc;
-	ctx->null = null;
 
 	crypto_aead_set_reqsize(
 		tfm,
@@ -359,8 +350,6 @@ static int crypto_authenc_init_tfm(struct crypto_aead *tfm)
 
 	return 0;
 
-err_free_skcipher:
-	crypto_free_skcipher(enc);
 err_free_ahash:
 	crypto_free_ahash(auth);
 	return err;
@@ -372,7 +361,6 @@ static void crypto_authenc_exit_tfm(struct crypto_aead *tfm)
 
 	crypto_free_ahash(ctx->auth);
 	crypto_free_skcipher(ctx->enc);
-	crypto_put_default_null_skcipher();
 }
 
 static void crypto_authenc_free(struct aead_instance *inst)
