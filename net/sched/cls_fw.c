@@ -271,6 +271,15 @@ static int fw_change(struct net *net, struct sk_buff *in_skb,
 		return 0; /* Succeed if it is old method. */
 	}
 
+		if (tcf_block_shared(tp->chain->block)) {
+			NL_SET_ERR_MSG(extack,
+				       "Must specify mark when attaching fw filter to block");
+			return -EINVAL;
+		}
+
+		return 0; /* Succeed if it is old method. */
+	}
+
 	err = nla_parse_nested(tb, TCA_FW_MAX, opt, fw_policy, NULL);
 	if (err < 0)
 		return err;

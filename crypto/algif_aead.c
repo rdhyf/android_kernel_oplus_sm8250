@@ -38,11 +38,6 @@
 #include <linux/net.h>
 #include <net/sock.h>
 
-struct aead_tfm {
-	struct crypto_aead *aead;
-	struct crypto_sync_skcipher *null_tfm;
-};
-
 static inline bool aead_sufficient_data(struct sock *sk)
 {
 	struct alg_sock *ask = alg_sk(sk);
@@ -71,20 +66,6 @@ static int aead_sendmsg(struct socket *sock, struct msghdr *msg, size_t size)
 	return af_alg_sendmsg(sock, msg, size, ivsize);
 }
 
-static int crypto_aead_copy_sgl(struct crypto_sync_skcipher *null_tfm,
-				struct scatterlist *src,
-				struct scatterlist *dst, unsigned int len)
-{
-	SYNC_SKCIPHER_REQUEST_ON_STACK(skreq, null_tfm);
-
-	skcipher_request_set_sync_tfm(skreq, null_tfm);
-	skcipher_request_set_callback(skreq, CRYPTO_TFM_REQ_MAY_SLEEP,
-				      NULL, NULL);
-	skcipher_request_set_crypt(skreq, src, dst, len, NULL);
-
-	return crypto_skcipher_encrypt(skreq);
-}
-
 static int _aead_recvmsg(struct socket *sock, struct msghdr *msg,
 			 size_t ignored, int flags)
 {
@@ -93,10 +74,9 @@ static int _aead_recvmsg(struct socket *sock, struct msghdr *msg,
 	struct sock *psk = ask->parent;
 	struct alg_sock *pask = alg_sk(psk);
 	struct af_alg_ctx *ctx = ask->private;
-	struct aead_tfm *aeadc = pask->private;
-	struct crypto_aead *tfm = aeadc->aead;
-	struct crypto_sync_skcipher *null_tfm = aeadc->null_tfm;
-	unsigned int i, as = crypto_aead_authsize(tfm);
+	struct crypto_aead *tfm = pask->private;
+	unsigned int as = crypto_aead_authsize(tfm);
+	unsigned int ivsize = crypto_aead_ivsize(tfm);
 	struct af_alg_async_req *areq;
 	struct scatterlist *rsgl_src, *tsgl_src = NULL;
 	void *iv;

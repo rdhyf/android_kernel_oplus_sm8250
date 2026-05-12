@@ -1051,10 +1051,6 @@ static int hidg_bind(struct usb_configuration *c, struct usb_function *f)
 
 	hidg->write_pending = 1;
 	hidg->req = NULL;
-	spin_lock_init(&hidg->read_spinlock);
-	init_waitqueue_head(&hidg->write_queue);
-	init_waitqueue_head(&hidg->read_queue);
-	INIT_LIST_HEAD(&hidg->completed_out_req);
 	hidg->bound = true;
 
 	/* create char device */
