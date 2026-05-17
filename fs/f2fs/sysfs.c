@@ -50,7 +50,6 @@ struct f2fs_attr {
 			 const char *, size_t);
 	int struct_type;
 	int offset;
-	int size;
 	int id;
 };
 
@@ -181,28 +180,8 @@ static ssize_t current_reserved_blocks_show(struct f2fs_attr *a,
 	return sprintf(buf, "%u\n", sbi->current_reserved_blocks);
 }
 
-static ssize_t __sbi_show_value(struct f2fs_attr *a,
-								struct f2fs_sb_info *sbi, char *buf,
-								unsigned char *value)
-{
-	switch (a->size) {
-		case 1:
-			return sysfs_emit(buf, "%u\n", *(u8 *)value);
-		case 2:
-			return sysfs_emit(buf, "%u\n", *(u16 *)value);
-		case 4:
-			return sysfs_emit(buf, "%u\n", *(u32 *)value);
-		case 8:
-			return sysfs_emit(buf, "%llu\n", *(u64 *)value);
-		default:
-			f2fs_bug_on(sbi, 1);
-			return sysfs_emit(buf, "show sysfs node value with wrong type\n");
-	}
-}
-
-
 static ssize_t unusable_show(struct f2fs_attr *a,
-							 struct f2fs_sb_info *sbi, char *buf)
+		struct f2fs_sb_info *sbi, char *buf)
 {
 	block_t unusable;
 
@@ -210,91 +189,67 @@ static ssize_t unusable_show(struct f2fs_attr *a,
 		unusable = sbi->unusable_block_count;
 	else
 		unusable = f2fs_get_unusable_blocks(sbi);
-	return sysfs_emit(buf, "%llu\n", (unsigned long long)unusable);
+	return sprintf(buf, "%llu\n", (unsigned long long)unusable);
 }
 
 static ssize_t encoding_show(struct f2fs_attr *a,
-							 struct f2fs_sb_info *sbi, char *buf)
+		struct f2fs_sb_info *sbi, char *buf)
 {
-	#ifdef CONFIG_UNICODE
+#ifdef CONFIG_UNICODE
 	struct super_block *sb = sbi->sb;
 
 	if (f2fs_sb_has_casefold(sbi))
-		return sysfs_emit(buf, "%s (%d.%d.%d)\n",
-						  sb->s_encoding->charset,
-					(sb->s_encoding->version >> 16) & 0xff,
-						  (sb->s_encoding->version >> 8) & 0xff,
-						  sb->s_encoding->version & 0xff);
-		#endif
-		return sysfs_emit(buf, "(none)\n");
+		return snprintf(buf, PAGE_SIZE, "%s (%d.%d.%d)\n",
+			sb->s_encoding->charset,
+			(sb->s_encoding->version >> 16) & 0xff,
+			(sb->s_encoding->version >> 8) & 0xff,
+			sb->s_encoding->version & 0xff);
+#endif
+	return sprintf(buf, "(none)");
 }
 
 static ssize_t mounted_time_sec_show(struct f2fs_attr *a,
-									 struct f2fs_sb_info *sbi, char *buf)
+		struct f2fs_sb_info *sbi, char *buf)
 {
-	return sysfs_emit(buf, "%llu\n", (unsigned long long)SIT_I(sbi)->mounted_time);
+	return sprintf(buf, "%llu", SIT_I(sbi)->mounted_time);
 }
 
 #ifdef CONFIG_F2FS_STAT_FS
 static ssize_t moved_blocks_foreground_show(struct f2fs_attr *a,
-											struct f2fs_sb_info *sbi, char *buf)
+				struct f2fs_sb_info *sbi, char *buf)
 {
 	struct f2fs_stat_info *si = F2FS_STAT(sbi);
 
-	return sysfs_emit(buf, "%llu\n",
-					  (unsigned long long)(si->tot_blks -
-					  (si->bg_data_blks + si->bg_node_blks)));
+	return sprintf(buf, "%llu\n",
+		(unsigned long long)(si->tot_blks -
+			(si->bg_data_blks + si->bg_node_blks)));
 }
 
 static ssize_t moved_blocks_background_show(struct f2fs_attr *a,
-											struct f2fs_sb_info *sbi, char *buf)
+				struct f2fs_sb_info *sbi, char *buf)
 {
 	struct f2fs_stat_info *si = F2FS_STAT(sbi);
 
-	return sysfs_emit(buf, "%llu\n",
-					  (unsigned long long)(si->bg_data_blks + si->bg_node_blks));
+	return sprintf(buf, "%llu\n",
+		(unsigned long long)(si->bg_data_blks + si->bg_node_blks));
 }
 
 static ssize_t avg_vblocks_show(struct f2fs_attr *a,
-								struct f2fs_sb_info *sbi, char *buf)
+		struct f2fs_sb_info *sbi, char *buf)
 {
 	struct f2fs_stat_info *si = F2FS_STAT(sbi);
 
 	si->dirty_count = dirty_segments(sbi);
 	f2fs_update_sit_info(sbi);
-	return sysfs_emit(buf, "%llu\n", (unsigned long long)(si->avg_vblocks));
+	return sprintf(buf, "%llu\n", (unsigned long long)(si->avg_vblocks));
 }
 #endif
-static ssize_t main_blkaddr_show(struct f2fs_attr *a,
-								 struct f2fs_sb_info *sbi, char *buf)
-{
-	return sysfs_emit(buf, "%llu\n",
-					  (unsigned long long)MAIN_BLKADDR(sbi));
-}
 
-static ssize_t __sbi_show_value(struct f2fs_attr *a,
-								struct f2fs_sb_info *sbi, char *buf,
-								unsigned char *value)
-{
-	switch (a->size) {
-		case 1:
-			return sysfs_emit(buf, "%u\n", *(u8 *)value);
-		case 2:
-			return sysfs_emit(buf, "%u\n", *(u16 *)value);
-		case 4:
-			return sysfs_emit(buf, "%u\n", *(u32 *)value);
-		case 8:
-			return sysfs_emit(buf, "%llu\n", *(u64 *)value);
-		default:
-			f2fs_bug_on(sbi, 1);
-			return sysfs_emit(buf,
-							  "show sysfs node value with wrong type\n");
-	}
-}
 static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 			struct f2fs_sb_info *sbi, char *buf)
 {
 	unsigned char *ptr = NULL;
+	unsigned int *ui;
 
 	ptr = __struct_ptr(sbi, a->struct_type);
 	if (!ptr)
@@ -321,18 +276,18 @@ static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 		return len;
 	}
 
-	#ifdef CONFIG_F2FS_APPBOOST
+#ifdef CONFIG_F2FS_APPBOOST
 	if (!strcmp(a->attr.name, "appboost")) {
 		return sysfs_emit(buf, "%u\n",
-						  sbi->appboost);
+			sbi->appboost);
 	}
 	if (!strcmp(a->attr.name, "appboost_max_blocks")) {
 		return sysfs_emit(buf, "%u\n",
-						  sbi->appboost_max_blocks);
+			sbi->appboost_max_blocks);
 	}
-	#endif
+#endif
 
-	#ifdef CONFIG_F2FS_FS_COMPRESSION
+#ifdef CONFIG_F2FS_FS_COMPRESSION
 	if (!strcmp(a->attr.name, "compr_written_block"))
 		return sysfs_emit(buf, "%llu\n", sbi->compr_written_block);
 
@@ -342,11 +297,11 @@ static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 	if (!strcmp(a->attr.name, "compr_new_inode"))
 		return sysfs_emit(buf, "%u\n", sbi->compr_new_inode);
 
-	#ifdef CONFIG_F2FS_FS_COMPRESSION_FIXED_OUTPUT
+#ifdef CONFIG_F2FS_FS_COMPRESSION_FIXED_OUTPUT
 	if (!strcmp(a->attr.name, "compress_layout")) {
 		if (F2FS_OPTION(sbi).compress_layout == COMPRESS_FIXED_OUTPUT)
-			return sysfs_emit(buf, "fixed-output\n");
-		return sysfs_emit(buf, "fixed-input\n");
+			return sysfs_emit(buf, "fixed-output");
+		return sysfs_emit(buf, "fixed-input");
 	}
 
 	if (!strcmp(a->attr.name, "compress_extension")) {
@@ -357,7 +312,7 @@ static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 			if (!strlen(F2FS_OPTION(sbi).extensions[i]))
 				continue;
 			len += scnprintf(buf + len, PAGE_SIZE - len, "%s\n",
-							 F2FS_OPTION(sbi).extensions[i]);
+					 F2FS_OPTION(sbi).extensions[i]);
 		}
 		up_read(&sbi->sb_lock);
 		return len;
@@ -371,73 +326,13 @@ static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 		up_read(&sbi->sb_lock);
 		return sysfs_emit(buf, "%d\n", log_size);
 	}
-	#endif
-	#endif
+#endif
+#endif
 
+	ui = (unsigned int *)(ptr + a->offset);
 
-	return __sbi_show_value(a, sbi, buf, ptr + a->offset);
+	return sprintf(buf, "%u\n", *ui);
 }
-
-
-static void __sbi_store_value(struct f2fs_attr *a,
-							  struct f2fs_sb_info *sbi,
-							  unsigned char *ui, unsigned long value)
-{
-	switch (a->size) {
-		case 1:
-			*(u8 *)ui = value;
-			break;
-		case 2:
-			*(u16 *)ui = value;
-			break;
-		case 4:
-			*(u32 *)ui = value;
-			break;
-		case 8:
-			*(u64 *)ui = value;
-			break;
-		default:
-			f2fs_bug_on(sbi, 1);
-			f2fs_msg(sbi->sb, KERN_ERR, "store sysfs node value with wrong type");
-	}
-	/* 处理原子写入（Atomic Write）相关的特定统计项 */
-	if (!strcmp(a->attr.name, "peak_atomic_write"))
-		return sysfs_emit(buf, "%lld\n", sbi->peak_atomic_write);
-
-	if (!strcmp(a->attr.name, "committed_atomic_block"))
-		return sysfs_emit(buf, "%llu\n", sbi->committed_atomic_block);
-
-	if (!strcmp(a->attr.name, "revoked_atomic_block"))
-		return sysfs_emit(buf, "%llu\n", sbi->revoked_atomic_block);
-
-	/* 默认逻辑：使用通用函数处理标准数值显示 */
-	return __sbi_show_value(a, sbi, buf, ptr + a->offset);
-}
-
-/* 写入辅助函数：根据属性定义的 size 安全地存入值 */
-static void __sbi_store_value(struct f2fs_attr *a,
-							  struct f2fs_sb_info *sbi,
-							  unsigned char *ui, unsigned long value)
-{
-	switch (a->size) {
-		case 1:
-			*(u8 *)ui = value;
-			break;
-		case 2:
-			*(u16 *)ui = value;
-			break;
-		case 4:
-			*(u32 *)ui = value;
-			break;
-		case 8:
-			*(u64 *)ui = value;
-			break;
-		default:
-			f2fs_bug_on(sbi, 1);
-			f2fs_err(sbi, "store sysfs node value with wrong type");
-	}
-}
-
 
 static ssize_t __sbi_store(struct f2fs_attr *a,
 			struct f2fs_sb_info *sbi,
@@ -603,7 +498,6 @@ out:
 		return count;
 	}
 
-
 	if (!strcmp(a->attr.name, "iostat_period_ms")) {
 		if (t < MIN_IOSTAT_PERIOD_MS || t > MAX_IOSTAT_PERIOD_MS)
 			return -EINVAL;
@@ -612,8 +506,10 @@ out:
 		spin_unlock(&sbi->iostat_lock);
 		return count;
 	}
-
-	#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+#ifdef CONFIG_OPLUS_FEATURE_OF2FS
+	/* 
+	 * 2020-1-14, add for oDiscard decoupling
+	 */
 	if (!strcmp(a->attr.name, "fsync_protect")) {
 		sbi->fsync_protect = !!t;
 		return count;
@@ -626,170 +522,64 @@ out:
 		if (t == DPOLICY_BG)
 			sbi->dpolicy_expect = DPOLICY_BG;
 		else if (t == DPOLICY_BALANCE) {
-			sbi->dpolicy_expect = DPOLICY_BALANCE;
-			wake_up_discard_thread_aggressive(sbi, DPOLICY_BALANCE);
+			sbi->dpolicy_expect= DPOLICY_BALANCE;
+			wake_up_discard_thread_aggressive(sbi,
+						DPOLICY_BALANCE);
 		}
 		else if (t == DPOLICY_PERFORMANCE) {
-			sbi->dpolicy_expect = DPOLICY_PERFORMANCE;
-			wake_up_discard_thread_aggressive(sbi, DPOLICY_PERFORMANCE);
+			sbi->dpolicy_expect= DPOLICY_PERFORMANCE;
+			wake_up_discard_thread_aggressive(sbi,
+						DPOLICY_PERFORMANCE);
 		}
 		return count;
 	}
-	#endif
-
-	#ifdef CONFIG_F2FS_APPBOOST
+#endif
+#ifdef CONFIG_F2FS_APPBOOST
 	if (!strcmp(a->attr.name, "appboost")) {
-		sbi->appboost = !!t;
+		if (t)
+			sbi->appboost = 1;
+		else
+			sbi->appboost = 0;
 		return count;
 	}
 	if (!strcmp(a->attr.name, "appboost_max_blocks")) {
-		sbi->appboost_max_blocks = (unsigned int)t;
+		sbi->appboost_max_blocks = t;
 		return count;
 	}
-	#endif
+#endif
 
-	#ifdef CONFIG_F2FS_FS_COMPRESSION
+#ifdef CONFIG_F2FS_FS_COMPRESSION
 	if (!strcmp(a->attr.name, "compr_written_block") ||
 		!strcmp(a->attr.name, "compr_saved_block")) {
 		if (t != 0)
 			return -EINVAL;
 		sbi->compr_written_block = 0;
-	sbi->compr_saved_block = 0;
+		sbi->compr_saved_block = 0;
+		return count;
+	}
+
+	if (!strcmp(a->attr.name, "compr_new_inode")) {
+		if (t != 0)
+			return -EINVAL;
+		sbi->compr_new_inode = 0;
+		return count;
+	}
+
+#ifdef CONFIG_F2FS_FS_COMPRESSION_FIXED_OUTPUT
+	if (!strcmp(a->attr.name, "compress_log_size")) {
+		if (t < MIN_COMPRESS_LOG_SIZE || t > MAX_COMPRESS_LOG_SIZE)
+			return -EINVAL;
+		down_write(&sbi->sb_lock);
+		F2FS_OPTION(sbi).compress_log_size = (unsigned char)t;
+		up_write(&sbi->sb_lock);
+		return count;
+	}
+#endif
+#endif
+
+	*ui = (unsigned int)t;
+
 	return count;
-		}
-
-		if (!strcmp(a->attr.name, "compr_new_inode")) {
-			if (t != 0)
-				return -EINVAL;
-			sbi->compr_new_inode = 0;
-			return count;
-		}
-		#endif
-		if (!strcmp(a->attr.name, "atgc_candidate_ratio")) {
-			if (t > 100)
-				return -EINVAL;
-			sbi->am.candidate_ratio = t;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "atgc_age_weight")) {
-			if (t > 100)
-				return -EINVAL;
-			sbi->am.age_weight = t;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "gc_segment_mode")) {
-			if (t < MAX_GC_MODE)
-				sbi->gc_segment_mode = t;
-			else
-				return -EINVAL;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "gc_reclaimed_segments")) {
-			if (t != 0)
-				return -EINVAL;
-			sbi->gc_reclaimed_segs[sbi->gc_segment_mode] = 0;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "max_fragment_chunk")) {
-			if (t >= MIN_FRAGMENT_SIZE && t <= MAX_FRAGMENT_SIZE)
-				sbi->max_fragment_chunk = t;
-			else
-				return -EINVAL;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "max_fragment_hole")) {
-			if (t >= MIN_FRAGMENT_SIZE && t <= MAX_FRAGMENT_SIZE)
-				sbi->max_fragment_hole = t;
-			else
-				return -EINVAL;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "peak_atomic_write")) {
-			if (t != 0)
-				return -EINVAL;
-			sbi->peak_atomic_write = 0;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "committed_atomic_block")) {
-			if (t != 0)
-				return -EINVAL;
-			sbi->committed_atomic_block = 0;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "revoked_atomic_block")) {
-			if (t != 0)
-				return -EINVAL;
-			sbi->revoked_atomic_block = 0;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "readdir_ra")) {
-			sbi->readdir_ra = !!t;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "hot_data_age_threshold")) {
-			if (t == 0 || t >= sbi->warm_data_age_threshold)
-				return -EINVAL;
-			if (t == *ui)
-				return count;
-			*ui = (unsigned int)t;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "warm_data_age_threshold")) {
-			if (t == 0 || t <= sbi->hot_data_age_threshold)
-				return -EINVAL;
-			if (t == *ui)
-				return count;
-			*ui = (unsigned int)t;
-			return count;
-		}
-
-		if (!strcmp(a->attr.name, "last_age_weight")) {
-			if (t > 100)
-				return -EINVAL;
-			if (t == *ui)
-				return count;
-			*ui = (unsigned int)t;
-			return count;
-		}
-
-		__sbi_store_value(a, sbi, ptr + a->offset, t);
-
-		return count;
-		}
-
-		if (!strcmp(a->attr.name, "compr_new_inode")) {
-			if (t != 0)
-				return -EINVAL;
-			sbi->compr_new_inode = 0;
-			return count;
-		}
-
-		#ifdef CONFIG_F2FS_FS_COMPRESSION_FIXED_OUTPUT
-		if (!strcmp(a->attr.name, "compress_log_size")) {
-			if (t < MIN_COMPRESS_LOG_SIZE || t > MAX_COMPRESS_LOG_SIZE)
-				return -EINVAL;
-			down_write(&sbi->sb_lock);
-			F2FS_OPTION(sbi).compress_log_size = (unsigned char)t;
-			up_write(&sbi->sb_lock);
-			return count;
-		}
-		#endif
-		#endif
-
-		__sbi_store_value(a, sbi, ptr + a->offset, t);
-
-		return count;
 }
 
 static ssize_t f2fs_sbi_store(struct f2fs_attr *a,
@@ -885,55 +675,43 @@ static ssize_t f2fs_feature_show(struct f2fs_attr *a,
 }
 
 static ssize_t f2fs_may_compr_show(struct f2fs_attr *a,
-								   struct f2fs_sb_info *sbi, char *buf)
+		struct f2fs_sb_info *sbi, char *buf)
 {
-
 	if (!strcmp(a->attr.name, "may_compress"))
-		return sysfs_emit(buf, "%d\n", may_compress ? 1 : 0);
+		return sprintf(buf, "%d", may_compress ? 1 : 0);
 	else if (!strcmp(a->attr.name, "may_set_compr_fl"))
-		return sysfs_emit(buf, "%d\n", may_set_compr_fl ? 1 : 0);
-
+		return sprintf(buf, "%d", may_set_compr_fl ? 1 : 0);
 	return -EINVAL;
 }
 
 static ssize_t f2fs_may_compr_store(struct f2fs_attr *a,
-									struct f2fs_sb_info *sbi, const char *buf, size_t count)
+			struct f2fs_sb_info *sbi, const char *buf, size_t count)
 {
 	int val, ret;
 
 	ret = kstrtoint(buf, 0, &val);
 	if (ret < 0)
 		return ret;
-
 	if (!strcmp(a->attr.name, "may_compress"))
-		may_compress = (val != 0);
+		may_compress = val == 0 ? false : true;
 	else if (!strcmp(a->attr.name, "may_set_compr_fl"))
-		may_set_compr_fl = (val != 0);
-	else
-		return -EINVAL;
-
+		may_set_compr_fl = val == 0 ? false : true;
 	return count;
 }
-#define F2FS_ATTR_OFFSET(_struct_type, _name, _mode, _show, _store, _offset, _size) \
+
+#define F2FS_ATTR_OFFSET(_struct_type, _name, _mode, _show, _store, _offset) \
 static struct f2fs_attr f2fs_attr_##_name = {			\
 	.attr = {.name = __stringify(_name), .mode = _mode },	\
 	.show	= _show,					\
 	.store	= _store,					\
 	.struct_type = _struct_type,				\
-	.offset = _offset,					\
-	.size = _size						\
+	.offset = _offset					\
 }
 
-#define F2FS_RO_ATTR(struct_type, struct_name, name, elname)	\
-F2FS_ATTR_OFFSET(struct_type, name, 0444,		\
-f2fs_sbi_show, NULL,				\
-offsetof(struct struct_name, elname),		\
-sizeof_field(struct struct_name, elname))
 #define F2FS_RW_ATTR(struct_type, struct_name, name, elname)	\
 	F2FS_ATTR_OFFSET(struct_type, name, 0644,		\
 		f2fs_sbi_show, f2fs_sbi_store,			\
-		offsetof(struct struct_name, elname),		\
-		sizeof_field(struct struct_name, elname))
+		offsetof(struct struct_name, elname))
 
 #define F2FS_GENERAL_RO_ATTR(name) \
 static struct f2fs_attr f2fs_attr_##name = __ATTR(name, 0444, name##_show, NULL)
