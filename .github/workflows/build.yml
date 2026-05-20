@@ -1,4 +1,4 @@
-name: Build kernel (noksu)
+name: Build kernel (non-ksu)
 
 on:
   push:
@@ -11,6 +11,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Install deps
         run: |
@@ -21,6 +23,19 @@ jobs:
             python3 rsync wget git zip \
             llvm lld
 
+      - name: Cache Clang Toolchain
+        id: cache-clang
+        uses: actions/cache@v4
+        with:
+          path: zyc-clang-16
+          key: clang-16.0.6-20250721-release
+
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          max-size: "2G"
+          key: kernel-ccache-${{ runner.os }}
+
       - name: Run build script
         run: |
           chmod +x ./ci/build_ci.sh
@@ -30,5 +45,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mysterious
-          path: |
-            anykernel/*.zip
+          path: anykernel/*.zip
+
+      - name: Upload Build log
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+

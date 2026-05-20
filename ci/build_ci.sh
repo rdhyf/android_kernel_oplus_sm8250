@@ -22,13 +22,16 @@ if find $AK3_PATH -maxdepth 1 -type f -name "*.zip" | grep -q .; then
     find $AK3_PATH -maxdepth 1 -type f -name "*.zip" -delete
 fi
 
-# Clang
-if [ ! -d "$KERNEL_ROOT/zyc-clang-16" ]; then
+# Clang Toolchain Logic
+if [ ! -d "$KERNEL_ROOT/zyc-clang-16/bin" ]; then
+    echo "Clang not found or cache missed, downloading..."
     if [ ! -f "/tmp/Clang-16.0.6-20250721.tar.gz" ]; then
         wget -O /tmp/Clang-16.0.6-20250721.tar.gz https://github.com/ZyCromerZ/Clang/releases/download/16.0.6-20250721-release/Clang-16.0.6-20250721.tar.gz
     fi
-    mkdir "$KERNEL_ROOT/zyc-clang-16"
+    mkdir -p "$KERNEL_ROOT/zyc-clang-16"
     tar -xvf /tmp/Clang-16.0.6-20250721.tar.gz -C "$KERNEL_ROOT/zyc-clang-16"
+else
+    echo "Clang toolchain restored from cache!"
 fi
 
 export CLANG_PATH=$KERNEL_ROOT/zyc-clang-16/bin
@@ -43,11 +46,15 @@ echo
 echo "Kernel is going to be built using $KERNEL_DEFCONFIG"
 echo
 
-make CC=clang AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip LLVM=1 LLVM_IAS=1 O=out $KERNEL_DEFCONFIG
+echo "=== KERNEL CONFIGURATION LOG ===" > "$KERNEL_ROOT/build.log"
+make CC="ccache clang" AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip LLVM=1 LLVM_IAS=1 O=out $KERNEL_DEFCONFIG 2>&1 | tee -a "$KERNEL_ROOT/build.log"
 
-make CC=clang AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip LLVM=1 LLVM_IAS=1 O=out -j$(nproc --all)
+echo "=== KERNEL COMPILATION LOG ===" >> "$KERNEL_ROOT/build.log"
+make CC="ccache clang" AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip LLVM=1 LLVM_IAS=1 O=out -j$(nproc --all) 2>&1 | tee -a "$KERNEL_ROOT/build.log"
 
 echo "Build complete"
+
+ccache -s
 
 if [ -f "$KERNEL_OUTPUT/dtb" ] && [ -f "$KERNEL_OUTPUT/dtbo.img" ] && [ -f "$KERNEL_OUTPUT/Image" ]; then
     cd $AK3_PATH
