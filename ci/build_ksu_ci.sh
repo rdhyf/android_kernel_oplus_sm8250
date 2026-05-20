@@ -83,13 +83,9 @@ if [ -f "$KERNEL_OUTPUT/dtb" ] && [ -f "$KERNEL_OUTPUT/dtbo.img" ] && [ -f "$KER
     cp "$KERNEL_OUTPUT/dtb"   .
     cp "$KERNEL_OUTPUT/dtbo.img"  .
     cp "$KERNEL_OUTPUT/Image"     .
-    zip -r "$FULL_AK3_NAME.zip" *
-    cd $KERNEL_ROOT
 
-    echo "out: $AK3_PATH/$FULL_AK3_NAME.zip"
-
-    # Clean existing 
-    rm -f "$AK3_PATH/dtb"
-    rm -f "$AK3_PATH/dtbo.img"
-    rm -f "$AK3_PATH/Image"
+echo "[+] Kernel files copied to $AK3_PATH"
+else
+    echo "[-] Error: Kernel files missing!"
+    exit 1
 fi

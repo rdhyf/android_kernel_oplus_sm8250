@@ -41,11 +41,11 @@ jobs:
           chmod +x ./ci/build_ci.sh
           ./ci/build_ci.sh
 
-      - name: Upload AnyKernel3 zip
+      - name: Pack & Upload AnyKernel3 zip
         uses: actions/upload-artifact@v4
         with:
           name: mysterious
-          path: anykernel/*.zip
+          path: anykernel/
 
       - name: Upload Build log
         uses: actions/upload-artifact@v4
