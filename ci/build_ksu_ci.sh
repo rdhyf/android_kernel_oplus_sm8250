@@ -30,9 +30,21 @@ fi
 curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
 ln -sf "$(realpath --relative-to="$DRIVER_DIR" "$KERNEL_ROOT/KernelSU/kernel")" "kernelsu" && echo "[+] Symlink created."
 
-sed -i 's/^REPO_NAME := .*/REPO_NAME := xxtvrxx233-Github_actions/' "$KSU_KBUILD"
+# Modify repo name
+BASE_VER=$(grep -oE 'expr [0-9]+' "$KERNEL_ROOT/KernelSU/kernel/Kbuild" | awk '{print $2}' || echo "30000")
 
-sed -i '/^ifneq (\$\(shell cd \$\(KSU_SRC\); \$\(GIT_BIN\) diff-index --quiet HEAD; echo \$\$?\),0)/,/^endif$/d' "$KSU_KBUILD"
+cd "$KERNEL_ROOT/KernelSU"
+KSU_LOCAL_VERSION=$(git rev-list --count HEAD 2>/dev/null || echo "0")
+KSU_HASH=$(git rev-parse --short=8 HEAD 2>/dev/null || echo "unknown")
+KSU_VERSION_CODE=$(expr $BASE_VER + $KSU_LOCAL_VERSION + 700 2>/dev/null || echo "30700")
+KSU_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "v4.1.0")
+cd "$KERNEL_ROOT"
+
+FINAL_KSU_VER="${KSU_TAG}-${KSU_HASH}@xxtvrxx233-Github_actions"
+echo ">>> Version Code: $KSU_VERSION_CODE"
+echo ">>> Version Name: $FINAL_KSU_VER"
+
+export KSU_MAKE_ARGS="REPO_NAME=xxtvrxx233-Github_actions KSU_VERSION_FULL=$FINAL_KSU_VER KSU_COMMIT_SHA=$KSU_HASH KSU_VERSION=$KSU_VERSION_CODE"
 
 # ---- drivers/Kconfig ----
 echo "Injecting KSU Kconfig entry..."
@@ -69,10 +81,10 @@ echo
 
 
 echo "=== KERNEL CONFIGURATION LOG ===" > "$KERNEL_ROOT/build.log"
-make CC="ccache clang" AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip LLVM=1 LLVM_IAS=1 O=out $KERNEL_DEFCONFIG 2>&1 | tee -a "$KERNEL_ROOT/build.log"
+make CC="ccache clang" AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip LLVM=1 LLVM_IAS=1 O=out $KERNEL_DEFCONFIG $KSU_MAKE_ARGS 2>&1 | tee -a "$KERNEL_ROOT/build.log"
 
 echo "=== KERNEL COMPILATION LOG ===" >> "$KERNEL_ROOT/build.log"
-make CC="ccache clang" AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip LLVM=1 LLVM_IAS=1 O=out -j$(nproc --all) 2>&1 | tee -a "$KERNEL_ROOT/build.log"
+make CC="ccache clang" AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump STRIP=llvm-strip LLVM=1 LLVM_IAS=1 O=out $KSU_MAKE_ARGS -j$(nproc --all) 2>&1 | tee -a "$KERNEL_ROOT/build.log"
 
 echo "Build complete"
 
