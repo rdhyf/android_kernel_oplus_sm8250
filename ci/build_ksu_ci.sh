@@ -28,7 +28,6 @@ fi
 
 # ReSukiSU
 curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/main/kernel/setup.sh" | bash
-ln -sf "$(realpath --relative-to="$DRIVER_DIR" "$KERNEL_ROOT/KernelSU/kernel")" "kernelsu" && echo "[+] Symlink created."
 
 # Modify repo name
 BASE_VER=$(grep -oE 'expr [0-9]+' "$KERNEL_ROOT/KernelSU/kernel/Kbuild" | awk '{print $2}' || echo "30000")
