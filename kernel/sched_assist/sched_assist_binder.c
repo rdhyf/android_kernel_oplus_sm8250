@@ -5,13 +5,14 @@
 
 
 #include <linux/seq_file.h>
-#include <../drivers/android/binder_internal.h>
+//#include "../../drivers/android/binder.c"//
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/version.h>
 #include <linux/delay.h>
 #include <trace/hooks/binder.h>
 #include <linux/random.h>
+#include "sched_assist_locking.h"
 
 #if IS_ENABLED(CONFIG_OPLUS_FEATURE_SCHED_ASSIST)
 #include <linux/sched_assist/sched_assist_common.h>
@@ -49,9 +50,15 @@ static inline int is_obs_valid(int async_ux_enable)
 		return OBS_VALID;
 }
 
+
 static inline bool binder_is_sync_mode(u32 flags)
 {
 	return !(flags & TF_ONE_WAY);
+}
+
+static inline bool test_task_is_rt(struct task_struct *p)
+{
+	return (p->prio >= 0) && (p->prio <= MAX_RT_PRIO - 1);
 }
 
 void set_task_async_ux_enable(pid_t pid, int enable)

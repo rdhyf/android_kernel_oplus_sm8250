@@ -11,6 +11,7 @@
 #include "sched_assist_locking.h"
 #include <linux/sched.h>
 #include <uapi/linux/android/binder.h>
+#include "../../../drivers/android/binder_internal_vendor.h"
 
 #define SET_ASYNC_UX_ENABLE				0x45555801
 #define ASYNC_UX_ENABLE_DATA_SIZE		4
@@ -55,7 +56,7 @@ enum {
 	BINDER_LOG_DEBUG		= 1U << 2,
 };
 
-struct binder_transaction;
+// struct binder_transaction;
 struct binder_proc;
 struct binder_thread;
 struct binder_work;

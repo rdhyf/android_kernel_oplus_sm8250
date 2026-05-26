@@ -1500,6 +1500,14 @@ struct task_struct {
 	long long uid_group_snapshot_prev_counts[UID_GROUP_SIZE];
 #endif
 
+#if defined(CONFIG_OPLUS_FEATURE_ASYNC_BINDER_INHERIT_UX)
+	/* for binder ux */
+	int binder_async_ux_enable;
+	bool binder_async_ux_sts;
+	int binder_thread_mode;
+	struct binder_node *binder_thread_node;
+#endif /* defined(CONFIG_OPLUS_FEATURE_ASYNC_BINDER_INHERIT_UX) */
+
 	/*
 	 * Time slack values; these are used to round up poll() and
 	 * select() etc timeout values. These are in nanoseconds.

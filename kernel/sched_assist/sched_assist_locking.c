@@ -11,6 +11,7 @@
 #include <linux/sched/signal.h>
 #include <linux/mm.h>
 #include <linux/rwsem.h>
+#include "sched_assist_locking.h"
 
 #include "sched_assist_trace.h"
 #include "sched_assist_common.h"
@@ -84,7 +85,7 @@ void locking_init_rq_data(struct rq *rq)
 	rq->rq_locking_task = 0;
 }
 
-inline bool test_task_is_rt(struct task_struct *p)
+bool test_task_is_rt(struct task_struct *p)
 {
 	/* valid RT priority is 0..MAX_RT_PRIO-1 */
 	return (p->prio >= 0) && (p->prio <= MAX_RT_PRIO-1);
