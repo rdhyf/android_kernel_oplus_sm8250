@@ -3375,7 +3375,7 @@ static bool binder_proc_transaction(struct binder_transaction *t,
 #ifdef OPLUS_FEATURE_SCHED_ASSIST
 		if (sysctl_sched_assist_enabled) {
 			if (!oneway || proc->proc_type)
-				binder_set_inherit_ux(thread->task, current);
+				binder_set_inherit_ux(thread->task, current, false);
 		}
 #endif /* OPLUS_FEATURE_SCHED_ASSIST */
 	} else if (!pending_async) {
@@ -4105,7 +4105,7 @@ static void binder_transaction(struct binder_proc *proc,
 		wake_up_interruptible_sync(&target_thread->wait);
 #ifdef OPLUS_FEATURE_SCHED_ASSIST
 		if (sysctl_sched_assist_enabled && !proc->proc_type) {
-			binder_unset_inherit_ux(thread->task);
+			binder_unset_inherit_ux(thread->task, false);
 		}
 #endif /* OPLUS_FEATURE_SCHED_ASSIST */
 #ifdef CONFIG_OPLUS_BINDER_STRATEGY
@@ -4770,7 +4770,7 @@ static int binder_wait_for_work(struct binder_thread *thread,
 				 &proc->waiting_threads);
 
 			if (sysctl_sched_assist_enabled) {
-				binder_unset_inherit_ux(thread->task);
+				binder_unset_inherit_ux(thread->task, false);
 			}
 		}
 #else /* OPLUS_FEATURE_SCHED_ASSIST */
@@ -5104,7 +5104,7 @@ retry:
 						task_active_pid_ns(current));
 #ifdef OPLUS_FEATURE_SCHED_ASSIST
 			if (sysctl_sched_assist_enabled) {
-				binder_set_inherit_ux(thread->task, t_from->task);
+				binder_set_inherit_ux(thread->task, t_from->task, false);
 			}
 #endif /* OPLUS_FEATURE_SCHED_ASSIST */
 #if defined(CONFIG_OPLUS_FEATURE_FRAME_BOOST)

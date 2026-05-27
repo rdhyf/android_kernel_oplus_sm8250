@@ -56,7 +56,7 @@ static inline bool binder_is_sync_mode(u32 flags)
 	return !(flags & TF_ONE_WAY);
 }
 
-static inline bool test_task_is_rt(struct task_struct *p)
+static inline bool test_task_is_rt_local(struct task_struct *p)
 {
 	return (p->prio >= 0) && (p->prio <= MAX_RT_PRIO - 1);
 }
