@@ -1701,7 +1701,7 @@ void set_ux_task_to_prefer_cpu(struct task_struct *task, int *orig_target_cpu)
 	bool invalid_target = false;
 	int orig_cls_id = 0;
 
-	if (!sysctl_sched_assist_enabled || !(sysctl_sched_assist_scene & SA_LAUNCH) || sysctl_ux_task_prefercpu_enable)
+	if (!sysctl_sched_assist_enabled || !(sysctl_sched_assist_scene & SA_LAUNCH)
 		return;
 
 	if (unlikely(cls_nr <= 0))
@@ -2878,7 +2878,7 @@ int get_st_group_id(struct task_struct *task)
 	rcu_read_lock();
 	grp = task_cgroup(task, subsys_id);
 	rcu_read_unlock();
-	return grp->id;
+	return grp->kn->id;
 #else
 	return 0;
 #endif
