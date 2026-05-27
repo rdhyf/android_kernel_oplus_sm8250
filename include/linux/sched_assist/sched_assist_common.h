@@ -29,14 +29,14 @@
 #define SA_TYPE_ANIMATOR (1 << 2)
 #define SA_TYPE_LISTPICK (1 << 3)
 #define SA_OPT_SET       (1 << 7)
-#define SA_TYPE_INHERIT  (1 << 8)
-#define SA_TYPE_ONCE_UX  (1 << 9)
+#define SA_OPT_RESET     (1 << 8)
+#define SA_OPT_SET_PRIORITY    (1 << 9)
+#define SA_TYPE_INHERIT  (1 << 16)
+#define SA_TYPE_ONCE_UX  (1 << 15)
 #define SA_TYPE_ID_CAMERA_PROVIDER  (1 << 10)
 #define SA_TYPE_ID_ALLOCATOR_SER    (1 << 11)
 
-
-
-#define SCHED_ASSIST_UX_MASK (0xFF)
+#define SCHED_ASSIST_UX_MASK (SA_TYPE_LIGHT|SA_TYPE_HEAVY|SA_TYPE_ANIMATOR|SA_TYPE_LISTPICK)
 
 /* define for sched assist scene type, keep same as the define in java file */
 #define SA_SCENE_OPT_CLEAR  (0)
@@ -79,8 +79,12 @@ extern bool task_is_sf_group(struct task_struct *tsk);
 #define ANDROID_PRIORITY_URGENT_AUDIO 101
 #define ANDROID_PRIORITY_AUDIO 104
 
-#define  FIRST_APPLICATION_UID  10000
-#define  LAST_APPLICATION_UID   19999
+#define ROOT_UID               0
+#define SYSTEM_UID             1000
+#define CAMERA_UID             1047
+#define FIRST_APPLICATION_UID  10000
+#define LAST_APPLICATION_UID   19999
+#define PER_USER_RANGE         100000
 
 #ifdef CONFIG_OPLUS_FEATURE_SCHED_SPREAD
 DECLARE_PER_CPU(struct task_count_rq, task_lb_count);

@@ -11,10 +11,12 @@
 
 #include <linux/types.h>
 #include <linux/sched.h>
-#include <../drivers/android/binder_internal.h>
+//#include "../../drivers/android/binder.c"//
 #include <uapi/linux/android/binder.h>
 #include "sched_assist_binder.h"
 #include <linux/tracepoint.h>
+#include "../../drivers/android/binder_internal.h"
+
 
 TRACE_EVENT(binder_ux_task,
 	TP_PROTO(int sync, int pending_async, int set_ux, struct task_struct *ux_task, int ux_enable, struct binder_transaction *t,

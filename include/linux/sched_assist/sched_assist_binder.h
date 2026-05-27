@@ -11,12 +11,12 @@
 #include "sched_assist_locking.h"
 #include <linux/sched.h>
 #include <uapi/linux/android/binder.h>
+#include "../../../drivers/android/binder_internal_vendor.h"
 
 #define SET_ASYNC_UX_ENABLE				0x45555801
 #define ASYNC_UX_ENABLE_DATA_SIZE		4
 
 #define CURRENT_TASK_PID				-1
-#define SYSTEM_SERVER_NAME              "system_server"
 
 enum OBS_STATUS {
 	 OBS_INVALID,
@@ -56,13 +56,7 @@ enum {
 	BINDER_LOG_DEBUG		= 1U << 2,
 };
 
-enum {
-	NUM_INSERT_ID1,
-	NUM_INSERT_ID2,
-	NUM_INSERT_MAX,
-};
-
-struct binder_transaction;
+// struct binder_transaction;
 struct binder_proc;
 struct binder_thread;
 struct binder_work;
