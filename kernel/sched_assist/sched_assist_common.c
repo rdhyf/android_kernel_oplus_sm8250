@@ -1701,7 +1701,7 @@ void set_ux_task_to_prefer_cpu(struct task_struct *task, int *orig_target_cpu)
 	bool invalid_target = false;
 	int orig_cls_id = 0;
 
-	if (!sysctl_sched_assist_enabled || !(sysctl_sched_assist_scene & SA_LAUNCH)
+	if (!sysctl_sched_assist_enabled || !(sysctl_sched_assist_scene & SA_LAUNCH))
 		return;
 
 	if (unlikely(cls_nr <= 0))
