@@ -552,10 +552,6 @@ static void msm_restart_prepare(const char *cmd)
 		need_warm_reset = (get_dload_mode() ||
 				(cmd != NULL && cmd[0] != '\0'));
 	}
-
-	// FIXME
-	need_warm_reset = true;
-
 #ifdef OPLUS_BUG_STABILITY 
 	if (in_panic){
 		//warm reset
@@ -585,12 +581,7 @@ static void msm_restart_prepare(const char *cmd)
 	else
 		qpnp_pon_system_pwr_off(PON_POWER_OFF_HARD_RESET);
 
-	// FIXME
-	qpnp_pon_set_restart_reason(
-		PON_RESTART_REASON_RECOVERY);
-	__raw_writel(0x77665502, restart_reason);
-	//if (cmd != NULL) {
-	if (0) {
+	if (cmd != NULL) {
 		if (!strncmp(cmd, "bootloader", 10)) {
 			qpnp_pon_set_restart_reason(
 				PON_RESTART_REASON_BOOTLOADER);
