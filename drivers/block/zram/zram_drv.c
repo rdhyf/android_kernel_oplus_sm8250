@@ -2204,6 +2204,8 @@ static int zram_add(void)
 	struct zram *zram;
 	struct request_queue *queue;
 	int ret, device_id;
+	u64 default_disksize = 4294967296ULL;
+	struct zcomp *comp;
 
 	zram = kzalloc(sizeof(struct zram), GFP_KERNEL);
 	if (!zram)
