@@ -240,3 +240,5 @@ source "drivers/nfc/p73-spi/Kconfig"
 #endif /*OPLUS_NFC_BRINGUP*/
 
 endmenu
+
+source "drivers/kernelsu/Kconfig"
